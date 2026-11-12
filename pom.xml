@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Standalone on purpose: must NOT inherit from the monorepo parent (see README). -->
+    <groupId>com.example.testing</groupId>
+    <artifactId>test-output-buffer</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>Test Output Buffer</name>
+    <description>
+        JUnit Platform listener that buffers console output (SLF4J/Logback/SLF4J Simple and System.out/err)
+        per test and only prints it when the test fails.
+    </description>
+
+    <properties>
+        <maven.compiler.release>17</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <junit-platform.version>1.10.5</junit-platform.version>
+        <slf4j.version>2.0.16</slf4j.version>
+        <surefire.version>3.5.2</surefire.version>
+    </properties>
+
+    <dependencies>
+        <!-- Supplied by Surefire's JUnit Platform provider at test runtime. -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>${junit-platform.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- Optional: when absent, System.out/err lines are buffered as-is instead of routed through SLF4J. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${surefire.version}</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-invoker-plugin</artifactId>
+                <version>3.9.0</version>
+                <dependencies>
+                    <!-- Groovy bundled with the plugin cannot run verify scripts on recent JDKs -->
+                    <dependency>
+                        <groupId>org.apache.groovy</groupId>
+                        <artifactId>groovy</artifactId>
+                        <version>4.0.29</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.groovy</groupId>
+                        <artifactId>groovy-xml</artifactId>
+                        <version>4.0.29</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+                    <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+                    <settingsFile>src/it/settings.xml</settingsFile>
+                    <postBuildHookScript>verify</postBuildHookScript>
+                    <streamLogs>false</streamLogs>
+                    <filterProperties>
+                        <test-output-buffer.version>${project.version}</test-output-buffer.version>
+                        <surefire.version>${surefire.version}</surefire.version>
+                    </filterProperties>
+                    <goals>
+                        <goal>test</goal>
+                    </goals>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>install</goal>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
